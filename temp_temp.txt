@@ -1,0 +1,30 @@
+
+Pre-process
+Text -> phoneme -> tokenize (dt.long) -> nn.embedding dimension -> pre-net -> scaled positional encoding -> encoder
+Audio -> mel_spectrogram (dt.float) -> pre-net -> scaled positional encoding -> decoder
+
+
+encoder_prenet -> simulated 1d convolutional net
+Encoder:
+normalize (save for residual)
+multihead attention (self-attention)
+residual connection
+normalize (save for residual)
+feedforward net
+residual connection
+
+
+decoder_prenet -> linear + GELU net
+Decoder:
+normalize (save for residual)
+multihead attention (self-attention)
+residual connection
+normalize (save for residual)
+multihead attention (cross-attention)
+residual connection
+normalize (save for residual)
+feedforward net
+residual connection
+
+
+postnet -> simulated 1d convolutional net
