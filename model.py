@@ -370,7 +370,7 @@ class AR_TTS(nn.Module):
         # Apply masking
         padding_mask_text = (text == 0)             # Padding value: 0s
 
-        if padding_mask_mel == None:    # Make this better ( Just add if not None to other blocks using it and then skip mask if no need for mask..)
+        if padding_mask_mel == None:    
             padding_mask_mel = (mel == 0).all(dim=-1)   # Padding value: 0
 
         mel_seq_len = mel.shape[1]
@@ -381,8 +381,7 @@ class AR_TTS(nn.Module):
         text = self.encoderPreNet(text)                             # Encoder pre-net
 
         text = self.positionalEmbedding(x=text)  # Apply positional embedding.
- #       print("encoder input (positional)")
-#        print(text)
+
         for i, encoderBlock in enumerate(self.Encoder):
             text = encoderBlock(
                                 text,
@@ -391,17 +390,10 @@ class AR_TTS(nn.Module):
 
 
 
-        # Process mel input -> Decoder
-#        print("ORIGINAL Log-mel spectrogram.")
-#        self._log_mel_signal_strength(mel)
 
         mel = self.decoderPreNet(mel)                               # [batch, seq, bin] -> [batch, seq, n_embed]
         mel = mel.masked_fill(padding_mask_mel.unsqueeze(-1).expand_as(mel), 0.0) 
         mel = self.positionalEmbedding(x=mel)
-
-
- #       print("Decoder PreNet -> zero-out padded positions -> Scaled Positional Embedding")
- #       self._log_mel_signal_strength(mel)
 
 
         guided_attention_weights = []
@@ -410,8 +402,8 @@ class AR_TTS(nn.Module):
         _self_attn_weights = []
 
         for i, decoderBlock in enumerate(self.Decoder):
-            apply_guided_loss = self.training# and i < 2 
-            apply_entropy_loss = self.training# and i < 2 
+            apply_guided_loss = self.training
+            apply_entropy_loss = self.training
 
             mel, _cross_attn_w, _self_attn_entropy = decoderBlock(
                 x=mel,
@@ -433,13 +425,8 @@ class AR_TTS(nn.Module):
         guided_attention_weights.append(_cross_attn_weights)
         guided_attention_weights.append(_self_attn_weights)
 
-#            print("Log-mel spectrogram after decoder block(s): ")
-#            print(mel)
 
 
-
-        # HMM maybe residual connection mel_out = linearMel + melProj??
-        # Post processing
         melProj = self.melProjection(mel)                         # [batch, seq, n_embed] -> [batch, seq, bin]
         if sampling:
             return melProj
